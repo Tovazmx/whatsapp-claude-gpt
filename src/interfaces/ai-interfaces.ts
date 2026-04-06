@@ -23,7 +23,8 @@ export enum AIProvider {
   DEEPSEEK='DEEPSEEK',
   DEEPINFRA='DEEPINFRA',
   ELEVENLABS='ELEVENLABS',
-  CUSTOM='CUSTOM'
+  CUSTOM='CUSTOM',
+  GEMINI='GEMINI'
 }
 
 export interface AIAnswer {

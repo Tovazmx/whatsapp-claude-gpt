@@ -14,6 +14,8 @@ import { AIConfig, CONFIG } from './config';
 import { AIAnswer, AIContent, AiMessage, AIProvider, AIRole } from './interfaces/ai-interfaces';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { AnthropicService } from './services/anthropic-service';
+import { GeminiService } from './services/gemini-service';
+import { Content, Part } from '@google/generative-ai';
 import { ImageBlockParam, MessageParam, TextBlock } from '@anthropic-ai/sdk/src/resources/messages';
 import NodeCache from 'node-cache';
 import { elevenTTS } from './services/elevenlabs-service';
@@ -25,6 +27,7 @@ export class Roboto {
 
   private openAIService: OpenaiService;
   private claudeService: AnthropicService;
+  private geminiService: GeminiService;
   private botConfig = CONFIG.botConfig;
   private allowedTypes = [MessageTypes.STICKER, MessageTypes.TEXT, MessageTypes.IMAGE, MessageTypes.VOICE, MessageTypes.AUDIO];
   private cache: NodeCache;
@@ -34,6 +37,7 @@ export class Roboto {
 
     this.openAIService = new OpenaiService();
     this.claudeService = new AnthropicService();
+    this.geminiService = new GeminiService();
     this.cache = new NodeCache();
   }
 
@@ -260,6 +264,9 @@ export class Roboto {
     if (AIConfig.ChatConfig.provider == AIProvider.CLAUDE) {
       const convertedMessageList: MessageParam[] = this.convertIaMessagesLang(messageList.reverse(), AIProvider.CLAUDE) as MessageParam[];
       return await this.claudeService.sendChat(convertedMessageList, CONFIG.getSystemPrompt());
+    } else if (AIConfig.ChatConfig.provider == AIProvider.GEMINI) {
+      const convertedMessageList: Content[] = this.convertIaMessagesLang(messageList.reverse(), AIProvider.GEMINI, systemPrompt) as Content[];
+      return await this.geminiService.sendChat(convertedMessageList, CONFIG.getSystemPrompt());
     } else if (AIConfig.ChatConfig.provider == AIProvider.OPENAI) {
       const convertedMessageList: ResponseInput = this.convertIaMessagesLang(messageList.reverse(), AIConfig.ChatConfig.provider as AIProvider, systemPrompt) as ResponseInput;
       return await this.openAIService.sendChatWithTools(convertedMessageList, 'text', AITools);
@@ -381,7 +388,7 @@ export class Roboto {
    * @param systemPrompt - Optional system prompt to include
    * @returns Formatted message array compatible with the specified AI provider
    */
-  private convertIaMessagesLang(messageList: AiMessage[], lang: AIProvider, systemPrompt?: string): MessageParam[] | ChatCompletionMessageParam[] | ResponseInput {
+  private convertIaMessagesLang(messageList: AiMessage[], lang: AIProvider, systemPrompt?: string): MessageParam[] | ChatCompletionMessageParam[] | ResponseInput | Content[] {
     switch (lang) {
       case AIProvider.CLAUDE:
 
@@ -507,6 +514,28 @@ export class Roboto {
         otherMsgList.unshift({role: AIRole.SYSTEM, content: systemPrompt});
 
         return otherMsgList;
+
+      case AIProvider.GEMINI: {
+        const geminiMsgList: Content[] = [];
+        messageList.forEach(msg => {
+          const parts: Part[] = [];
+          msg.content.forEach(c => {
+            if (c.type === 'image') {
+              parts.push({ inlineData: { data: c.value!, mimeType: (c.media_type ?? 'image/jpeg') as any } });
+            } else {
+              parts.push({ text: JSON.stringify({ message: c.value, author: msg.name, type: c.type }) });
+            }
+          });
+          const geminiRole = msg.role === AIRole.ASSISTANT ? 'model' : 'user';
+          if (geminiMsgList.length > 0 && geminiMsgList[geminiMsgList.length - 1].role === geminiRole) {
+            geminiMsgList[geminiMsgList.length - 1].parts.push(...parts);
+          } else {
+            geminiMsgList.push({ role: geminiRole, parts });
+          }
+        });
+        if (geminiMsgList.length > 0 && geminiMsgList[0].role !== 'user') geminiMsgList.shift();
+        return geminiMsgList;
+      }
 
       default:
         return [];

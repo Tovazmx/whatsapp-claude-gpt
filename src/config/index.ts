@@ -28,6 +28,10 @@ const Providers = {
     apiKey: process.env.DEEPINFRA_API_KEY,
     baseURL: process.env.DEEPINFRA_BASEURL ?? 'https://api.deepinfra.com/v1/openai'
   },
+  GEMINI: {
+    baseURL: undefined,
+    apiKey:  process.env.GEMINI_API_KEY
+  },
   CUSTOM: {
     baseURL: process.env.CUSTOM_BASEURL,
     apiKey:  process.env.CUSTOM_API_KEY,
@@ -44,6 +48,7 @@ const ChatConfig = {
     DEEPSEEK: process.env.DEEPSEEK_COMPLETION_MODEL ?? 'deepseek-chat',
     DEEPINFRA: process.env.DEEPINFRA_COMPLETION_MODEL ?? 'meta-llama/Llama-3.3-70B-Instruct',
     CUSTOM: process.env.CUSTOM_COMPLETION_MODEL,
+    GEMINI: process.env.GEMINI_CHAT_MODEL ?? 'gemini-2.0-flash',
   }
 };
 
