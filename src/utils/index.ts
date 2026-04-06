@@ -114,7 +114,8 @@ export function configValidation() {
       'DEEPSEEK': 'DEEPSEEK_API_KEY',
       'ELEVENLABS': 'ELEVENLABS_API_KEY',
       'DEEPINFRA': 'DEEPINFRA_API_KEY',
-      'CUSTOM': 'CUSTOM_API_KEY'
+      'CUSTOM': 'CUSTOM_API_KEY',
+      'GEMINI': 'GEMINI_API_KEY'
     };
 
     return envVarMapping[provider] || `${provider}_API_KEY`;
@@ -161,9 +162,9 @@ export function configValidation() {
   }
 
   const { provider: chatProvider } = AIConfig.ChatConfig;
-  if (!['OPENAI', 'CLAUDE', 'QWEN', 'DEEPSEEK', 'DEEPINFRA', 'CUSTOM'].includes(chatProvider)) {
+  if (!['OPENAI', 'CLAUDE', 'QWEN', 'DEEPSEEK', 'DEEPINFRA', 'CUSTOM', 'GEMINI'].includes(chatProvider)) {
     logger.error(`ERROR: Invalid CHAT_PROVIDER: ${chatProvider}`);
-    logger.error(`Valid options are: OPENAI, CLAUDE, QWEN, DEEPSEEK, DEEPINFRA, CUSTOM`);
+    logger.error(`Valid options are: OPENAI, CLAUDE, QWEN, DEEPSEEK, DEEPINFRA, CUSTOM, GEMINI`);
     logger.error(`Please set a valid CHAT_PROVIDER in your .env file.`);
     process.exit(1);
   }
